@@ -20,6 +20,9 @@ dependencies:
     git:
       url: https://github.com/KasemJaffer/receive_sharing_intent
       ref: 2cea396843cd3ab1b5ec4334be4233864637874e
+  # Local patch of file_picker 8.0.7 — only change is compileSdk 34→36
+  # to satisfy flutter_plugin_android_lifecycle's SDK 36 requirement.
+  # TODO: replace with file_selector (flutter team plugin) when there's time.
   file_picker:
     path: ../packages/file_picker
   archive: ^3.6.1
