@@ -89,10 +89,11 @@ class VolumeMetrics {
     }
 
     // ── Emoji rate ───────────────────────────────────────────────────────────
-    final emojiA = aMsgs.fold(0, (s, m) => s + m.emojiCount);
-    final emojiB = bMsgs.fold(0, (s, m) => s + m.emojiCount);
+    // Fraction of each person's messages that contain at least one emoji.
+    final withEmojiA = aMsgs.where((m) => m.emojiCount > 0).length;
+    final withEmojiB = bMsgs.where((m) => m.emojiCount > 0).length;
     if (nA > 0 && nB > 0) {
-      final rateA = emojiA / nA, rateB = emojiB / nB;
+      final rateA = withEmojiA / nA, rateB = withEmojiB / nB;
       final topEmoji = userMsgs.where((m) => m.emojiCount > 2).toList()
         ..sort((a, b) => b.emojiCount.compareTo(a.emojiCount));
       results.add(MetricResult(
@@ -101,11 +102,11 @@ class VolumeMetrics {
         valueA: rateA,
         valueB: rateB,
         winner: winnerFromValues(rateA, rateB),
-        displayValueA: rateA.toStringAsFixed(2),
-        displayValueB: rateB.toStringAsFixed(2),
-        confidence: (emojiA + emojiB) >= 10 ? MetricConfidence.ok : MetricConfidence.low,
+        displayValueA: fmtPct(rateA),
+        displayValueB: fmtPct(rateB),
+        confidence: (withEmojiA + withEmojiB) >= 5 ? MetricConfidence.ok : MetricConfidence.low,
         evidenceMessageIds: topEmoji.take(6).map((m) => m.id).toList(),
-        summaryLine: '${rateA > rateB ? personA : personB} uses more emojis per message.',
+        summaryLine: '${rateA > rateB ? personA : personB} uses emojis in more of their messages.',
       ));
     } else {
       results.add(MetricResult.gated(runId, MK.emojiRate));

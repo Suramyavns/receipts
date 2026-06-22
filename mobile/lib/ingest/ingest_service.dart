@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter_sharing_intent/flutter_sharing_intent.dart';
+import 'package:flutter_sharing_intent/model/sharing_file.dart';
+import 'package:file_selector/file_selector.dart';
 import '../parser/chat_parser.dart';
 import '../domain/sessionizer.dart';
 import '../domain/metrics/metrics_runner.dart';
@@ -26,26 +27,27 @@ class IngestResult {
 }
 
 class IngestService {
-  static StreamSubscription<List<SharedMediaFile>>? _sharingSubscription;
+  static StreamSubscription<List<SharedFile>>? _sharingSubscription;
 
   /// Wire up the OS share sheet. Returns any files shared at cold launch.
   static Future<List<String>> init(void Function(List<String>) onFiles) async {
-    _sharingSubscription = ReceiveSharingIntent.instance.getMediaStream().listen(
-      (files) => onFiles(files.map((f) => f.path).toList()),
+    _sharingSubscription = FlutterSharingIntent.instance.getMediaStream().listen(
+      (files) => onFiles(files.map((f) => f.value ?? '').where((p) => p.isNotEmpty).toList()),
     );
-    final initial = await ReceiveSharingIntent.instance.getInitialMedia();
-    return initial.map((f) => f.path).toList();
+    final initial = await FlutterSharingIntent.instance.getInitialSharing();
+    return initial.map((f) => f.value ?? '').where((p) => p.isNotEmpty).toList();
   }
 
   static void dispose() => _sharingSubscription?.cancel();
 
   static Future<List<String>?> pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['txt', 'zip'],
+    const typeGroup = XTypeGroup(
+      label: 'chat exports',
+      extensions: ['txt', 'zip'],
     );
-    if (result == null || result.files.single.path == null) return null;
-    return [result.files.single.path!];
+    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    if (file == null) return null;
+    return [file.path];
   }
 
   /// Full pipeline: parse → hash → dedupe check → sessionize → metrics → save.

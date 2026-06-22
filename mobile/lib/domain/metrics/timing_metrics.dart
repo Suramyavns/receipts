@@ -300,7 +300,7 @@ class TimingMetrics {
       runId: runId,
       metricKey: MK.backForthDensity,
       scalar: density,
-      displayValueA: density.toStringAsFixed(2),
+      displayValueA: fmtPct(density),
       displayValueB: '',
       confidence: MetricConfidence.ok,
       summaryLine: density > 0.7
