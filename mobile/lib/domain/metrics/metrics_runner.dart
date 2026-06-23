@@ -54,6 +54,8 @@ class MetricsRunner {
     results.add(CompositeMetrics.reciprocityIndex(runId, personA, personB, byKey));
     byKey[MK.reciprocityIndex] = results.last;
 
+    results.add(CompositeMetrics.dryTexterScore(runId, personA, personB, byKey));
+
     results.add(CompositeMetrics.relationshipHealth(runId, byKey));
 
     return results;

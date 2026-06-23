@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../models/run_message.dart';
 import '../models/metric_result.dart';
 import 'metric_helpers.dart';
@@ -10,6 +11,11 @@ class ToneMetrics {
   static final _affectionRe = RegExp(
     r'\b(love|miss you|miss u|adore|darling|babe|baby|honey|sweetheart|dear|❤|🧡|💛|💚|💙|💜|🖤|🤍|🤎|💕|💞|💓|💗|💖|💝|😍|🥰)\b',
     caseSensitive: false,
+  );
+
+  static final _emojiRe = RegExp(
+    r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]',
+    unicode: true,
   );
 
   static List<MetricResult> compute(
@@ -28,6 +34,7 @@ class ToneMetrics {
       _questionRate(runId, personA, personB, aMsgs, bMsgs),
       _laughterRate(runId, personA, personB, aMsgs, bMsgs),
       _affectionIndex(runId, personA, personB, aMsgs, bMsgs),
+      _emojiDiversity(runId, personA, personB, aMsgs, bMsgs),
     ];
   }
 
@@ -106,6 +113,55 @@ class ToneMetrics {
       confidence: (affA.length + affB.length) >= 3 ? MetricConfidence.ok : MetricConfidence.low,
       evidenceMessageIds: ev,
       summaryLine: '${rateA >= rateB ? a : b} expresses more affection.',
+    );
+  }
+
+  static MetricResult _emojiDiversity(
+      String runId, String a, String b,
+      List<RunMessage> aMsgs, List<RunMessage> bMsgs) {
+    List<String> extractEmojis(RunMessage m) =>
+        _emojiRe.allMatches(m.body).map((x) => x.group(0)!).toList();
+
+    final aEmojis = aMsgs.expand(extractEmojis).toList();
+    final bEmojis = bMsgs.expand(extractEmojis).toList();
+
+    if (aEmojis.length < 10 || bEmojis.length < 10) {
+      return MetricResult.gated(runId, MK.emojiDiversity);
+    }
+
+    double shannonEntropy(List<String> emojis) {
+      final freq = <String, int>{};
+      for (final e in emojis) { freq[e] = (freq[e] ?? 0) + 1; }
+      final n = emojis.length;
+      double entropy = 0;
+      for (final count in freq.values) {
+        final p = count / n;
+        entropy -= p * math.log(p) / math.ln2;
+      }
+      return entropy;
+    }
+
+    final entropyA = shannonEntropy(aEmojis);
+    final entropyB = shannonEntropy(bEmojis);
+
+    final ev = [...aMsgs, ...bMsgs]
+        .where((m) => m.emojiCount >= 2)
+        .toList()
+      ..sort((x, y) => y.emojiCount.compareTo(x.emojiCount));
+
+    return MetricResult(
+      runId: runId,
+      metricKey: MK.emojiDiversity,
+      valueA: entropyA,
+      valueB: entropyB,
+      winner: winnerFromValues(entropyA, entropyB),
+      displayValueA: entropyA.toStringAsFixed(2),
+      displayValueB: entropyB.toStringAsFixed(2),
+      confidence: MetricConfidence.ok,
+      evidenceMessageIds: ev.take(6).map((m) => m.id).toList(),
+      summaryLine: (entropyA - entropyB).abs() < 0.2
+          ? 'Both use a similar range of emojis.'
+          : '${entropyA > entropyB ? a : b} uses a wider variety of emojis.',
     );
   }
 }

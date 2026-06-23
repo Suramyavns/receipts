@@ -107,6 +107,41 @@ class InsightGenerator {
       }
     }
 
+    // ── Active hours overlap ─────────────────────────────────────────────────
+    final aho = metrics[MK.activeHoursOverlap];
+    if (aho != null && !aho.isGated && aho.scalar != null) {
+      final ov = aho.scalar!;
+      if (ov < 0.35) {
+        add(MK.activeHoursOverlap, 0.6,
+            'You tend to text at different hours — schedule overlap is only ${aho.displayValueA}.');
+      } else if (ov >= 0.65) {
+        add(MK.activeHoursOverlap, 0.4,
+            'Strong schedule overlap (${aho.displayValueA}) — you\'re usually online at the same time.');
+      }
+    }
+
+    // ── Dry texter score ─────────────────────────────────────────────────────
+    final dt = metrics[MK.dryTexterScore];
+    if (dt != null && !dt.isGated && dt.valueA != null && dt.valueB != null) {
+      final diff = (dt.valueA! - dt.valueB!).abs();
+      if (diff >= 15) {
+        final drier = dt.valueA! > dt.valueB! ? personA : personB;
+        add(MK.dryTexterScore, diff / 100,
+            '$drier is notably the drier texter — shorter messages, fewer questions, slower to reply.');
+      }
+    }
+
+    // ── Emoji diversity ──────────────────────────────────────────────────────
+    final ed = metrics[MK.emojiDiversity];
+    if (ed != null && !ed.isGated && ed.valueA != null && ed.valueB != null) {
+      final diff = (ed.valueA! - ed.valueB!).abs();
+      if (diff >= 0.5) {
+        final more = ed.valueA! > ed.valueB! ? personA : personB;
+        add(MK.emojiDiversity, diff / 4,
+            '$more uses a much wider variety of emojis.');
+      }
+    }
+
     // Sort by magnitude, take top 5
     candidates.sort((a, b) => b.magnitude.compareTo(a.magnitude));
     return candidates

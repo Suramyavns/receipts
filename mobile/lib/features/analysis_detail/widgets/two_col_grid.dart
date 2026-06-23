@@ -80,6 +80,9 @@ class TwoColGrid extends StatelessWidget {
     MK.pursuitGap:         'PURSUIT GAP',
     MK.reciprocityIndex:   'RECIPROCITY',
     MK.relationshipHealth: 'HEALTH',
+    MK.emojiDiversity:     'EMOJI VARIETY',
+    MK.activeHoursOverlap: 'HOURS OVERLAP',
+    MK.dryTexterScore:     'DRY TEXTER',
   };
   static String _label(String k) => _labels[k] ?? k.toUpperCase();
 
@@ -96,10 +99,11 @@ class TwoColGrid extends StatelessWidget {
     MK.replyLatency,    MK.initiationRatio,
     MK.doubleTextRate,  MK.silenceBreakerRatio,
     MK.lastWordRatio,   MK.ghostRate,
-    MK.backForthDensity,
+    MK.backForthDensity,MK.activeHoursOverlap,
     MK.laughterRate,    MK.questionRate,
-    MK.affectionIndex,
+    MK.affectionIndex,  MK.emojiDiversity,
     MK.reciprocityIndex,MK.investmentIndex,
+    MK.dryTexterScore,
   ];
   static Color _accent(String k) {
     final i = _displayOrder.indexOf(k);

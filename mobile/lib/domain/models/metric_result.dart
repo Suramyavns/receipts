@@ -91,4 +91,7 @@ class MK {
   static const pursuitGap = 'pursuit_gap';
   static const reciprocityIndex = 'reciprocity_index';
   static const relationshipHealth = 'relationship_health';
+  static const emojiDiversity = 'emoji_diversity';
+  static const activeHoursOverlap = 'active_hours_overlap';
+  static const dryTexterScore = 'dry_texter_score';
 }

@@ -186,6 +186,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
                       MK.lastWordRatio,
                       MK.ghostRate,
                       MK.backForthDensity,
+                      MK.activeHoursOverlap,
                     ]),
                     const SizedBox(height: 14),
 
@@ -195,6 +196,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
                       MK.laughterRate,
                       MK.questionRate,
                       MK.affectionIndex,
+                      MK.emojiDiversity,
                     ]),
                     const SizedBox(height: 14),
 
@@ -203,6 +205,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
                     TwoColGrid(run: widget.run, metrics: _metrics, keys: const [
                       MK.reciprocityIndex,
                       MK.investmentIndex,
+                      MK.dryTexterScore,
                     ]),
                     const SizedBox(height: 14),
 

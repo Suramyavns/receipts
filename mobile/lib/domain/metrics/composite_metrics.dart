@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../models/metric_result.dart';
 import 'metric_helpers.dart';
 
@@ -137,6 +138,67 @@ class CompositeMetrics {
               : carrier != null
                   ? 'Low reciprocity — $carrier is carrying the conversation.'
                   : 'Low reciprocity — one person is carrying the conversation.',
+    );
+  }
+
+  /// Dry Texter Score: composite of short messages, low question rate, high ghost
+  /// rate, and slow reply latency. Higher score = drier texter (0–100).
+  static MetricResult dryTexterScore(
+      String runId, String a, String b, Map<String, MetricResult> metrics) {
+    final sumA = <double>[], sumB = <double>[];
+
+    // Short messages → drier. Normalize avg word count 1–20 words, then invert.
+    final len = metrics[MK.avgMessageLength];
+    if (len != null && !len.isGated && len.valueA != null && len.valueB != null) {
+      sumA.add(1 - (len.valueA!.clamp(1.0, 20.0) / 20.0));
+      sumB.add(1 - (len.valueB!.clamp(1.0, 20.0) / 20.0));
+    }
+
+    // Low question rate → drier.
+    final qr = metrics[MK.questionRate];
+    if (qr != null && !qr.isGated && qr.valueA != null && qr.valueB != null) {
+      sumA.add(1 - qr.valueA!);
+      sumB.add(1 - qr.valueB!);
+    }
+
+    // High ghost rate → drier.
+    final gr = metrics[MK.ghostRate];
+    if (gr != null && !gr.isGated && gr.valueA != null && gr.valueB != null) {
+      sumA.add(gr.valueA!);
+      sumB.add(gr.valueB!);
+    }
+
+    // Slow replies → drier. Log-normalize latency: ≤5 min → 0, ≥24 h → 1.
+    final rl = metrics[MK.replyLatency];
+    if (rl != null && !rl.isGated && rl.valueA != null && rl.valueB != null) {
+      double normLatency(double secs) {
+        if (secs <= 300) return 0.0;
+        if (secs >= 86400) return 1.0;
+        return (math.log(secs) - math.log(300)) /
+            (math.log(86400) - math.log(300));
+      }
+      sumA.add(normLatency(rl.valueA!));
+      sumB.add(normLatency(rl.valueB!));
+    }
+
+    if (sumA.length < 2) return MetricResult.gated(runId, MK.dryTexterScore);
+
+    final n = sumA.length;
+    final scoreA = (sumA.reduce((s, v) => s + v) / n) * 100;
+    final scoreB = (sumB.reduce((s, v) => s + v) / n) * 100;
+
+    return MetricResult(
+      runId: runId,
+      metricKey: MK.dryTexterScore,
+      valueA: scoreA,
+      valueB: scoreB,
+      winner: winnerFromValues(scoreA, scoreB),
+      displayValueA: '${scoreA.round()}/100',
+      displayValueB: '${scoreB.round()}/100',
+      confidence: n >= 3 ? MetricConfidence.ok : MetricConfidence.low,
+      summaryLine: (scoreA - scoreB).abs() < 5
+          ? 'Both text in a similar style.'
+          : '${scoreA > scoreB ? a : b} is the drier texter.',
     );
   }
 

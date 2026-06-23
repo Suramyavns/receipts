@@ -26,6 +26,7 @@ class TimingMetrics {
     results.add(_silenceBreaker(runId, personA, personB, userMsgs));
     results.add(_backForthDensity(runId, personA, personB, userMsgs));
     results.add(_momentumTrend(runId, personA, personB, userMsgs));
+    results.add(_activeHoursOverlap(runId, personA, personB, userMsgs));
 
     return results;
   }
@@ -374,6 +375,63 @@ class TimingMetrics {
       displayValueB: '${ratio.toStringAsFixed(1)}× recent avg',
       confidence: MetricConfidence.ok,
       summaryLine: 'Chat activity is $label over recent weeks.',
+    );
+  }
+
+  // ── Active hours overlap ──────────────────────────────────────────────────
+  static MetricResult _activeHoursOverlap(
+      String runId, String a, String b, List<RunMessage> msgs) {
+    final aHours = List<int>.filled(24, 0);
+    final bHours = List<int>.filled(24, 0);
+
+    for (final m in msgs) {
+      final h = m.timestamp.hour;
+      if (m.sender == a) {
+        aHours[h]++;
+      } else if (m.sender == b) {
+        bHours[h]++;
+      }
+    }
+
+    final nA = aHours.reduce((s, v) => s + v);
+    final nB = bHours.reduce((s, v) => s + v);
+    if (nA < 20 || nB < 20) return MetricResult.gated(runId, MK.activeHoursOverlap);
+
+    // Overlap coefficient: Σ min(pA[h], pB[h])
+    double overlap = 0;
+    for (int h = 0; h < 24; h++) {
+      final pA = aHours[h] / nA;
+      final pB = bHours[h] / nB;
+      overlap += pA < pB ? pA : pB;
+    }
+
+    // Find each person's peak hour for the summary
+    int peakA = 0, peakB = 0;
+    for (int h = 1; h < 24; h++) {
+      if (aHours[h] > aHours[peakA]) peakA = h;
+      if (bHours[h] > bHours[peakB]) peakB = h;
+    }
+
+    String fmtHour(int h) {
+      if (h == 0) return '12am';
+      if (h < 12) return '${h}am';
+      if (h == 12) return '12pm';
+      return '${h - 12}pm';
+    }
+
+    final pct = fmtPct(overlap);
+    return MetricResult(
+      runId: runId,
+      metricKey: MK.activeHoursOverlap,
+      scalar: overlap,
+      displayValueA: pct,
+      displayValueB: '',
+      confidence: MetricConfidence.ok,
+      summaryLine: overlap >= 0.6
+          ? 'High schedule overlap — you\'re usually active at the same times.'
+          : overlap >= 0.35
+              ? '$a peaks at ${fmtHour(peakA)}, $b at ${fmtHour(peakB)} — moderate overlap ($pct).'
+              : 'Low overlap — you tend to text at different hours of the day.',
     );
   }
 }
