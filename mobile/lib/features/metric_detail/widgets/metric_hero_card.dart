@@ -20,7 +20,11 @@ class MetricHeroCard extends StatelessWidget {
     }
 
     final hasB = result.displayValueB.isNotEmpty && result.displayValueB != '—';
-    final bigVal = result.displayValueA;
+    final bigVal = !hasB
+        ? result.displayValueA
+        : (result.valueA ?? 0) >= (result.valueB ?? 0)
+            ? result.displayValueA
+            : result.displayValueB;
     final sub = hasB
         ? '${run.personA}: ${result.displayValueA} · ${run.personB}: ${result.displayValueB}'
         : result.summaryLine;

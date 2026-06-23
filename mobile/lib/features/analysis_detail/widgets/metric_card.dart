@@ -24,7 +24,7 @@ class MetricCard extends StatelessWidget {
     final valA = result.isGated ? '—' : result.displayValueA;
     final valB = result.isGated ? '—' : result.displayValueB;
     final isSingleStat = valB.isEmpty;
-    final (pctA, pctB) = isSingleStat ? (0.0, 0.0) : _barWidths(result);
+    final (pctA, pctB) = (isSingleStat || result.isGated) ? (0.0, 0.0) : _barWidths(result);
 
     return GestureDetector(
       onTap: onTap,
@@ -103,7 +103,7 @@ class MetricCard extends StatelessWidget {
   static (double, double) _barWidths(MetricResult r) {
     final a = r.valueA;
     final b = r.valueB;
-    if (a == null) return (0.5, 0.5);
+    if (a == null) return (0.0, 0.0);
     if (b == null) return (a.clamp(0.0, 1.0), (1 - a).clamp(0.0, 1.0));
 
     if (r.metricKey == MK.replyLatency) {

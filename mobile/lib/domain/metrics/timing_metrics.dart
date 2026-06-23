@@ -104,7 +104,9 @@ class TimingMetrics {
       displayValueB: fmtPct(ratioB),
       confidence: MetricConfidence.ok,
       evidenceMessageIds: openerIds,
-      summaryLine: '${ratioA >= ratioB ? a : b} starts ${fmtPct(ratioA >= ratioB ? ratioA : ratioB)} of conversations.',
+      summaryLine: (ratioA - ratioB).abs() < 0.02
+          ? 'Both start conversations equally.'
+          : '${ratioA > ratioB ? a : b} starts ${fmtPct(ratioA > ratioB ? ratioA : ratioB)} of conversations.',
     );
   }
 
@@ -140,7 +142,9 @@ class TimingMetrics {
       displayValueB: fmtPct(rateB),
       confidence: (doublesA + doublesB) >= 5 ? MetricConfidence.ok : MetricConfidence.low,
       evidenceMessageIds: evIds,
-      summaryLine: '${rateA >= rateB ? a : b} double-texts more often.',
+      summaryLine: (rateA - rateB).abs() < 0.02
+          ? 'Both double-text at a similar rate.'
+          : '${rateA > rateB ? a : b} double-texts more often.',
     );
   }
 
@@ -181,7 +185,7 @@ class TimingMetrics {
       displayValueB: fmtPct(1 - ratioA),
       confidence: MetricConfidence.ok,
       evidenceMessageIds: evIds.take(8).toList(),
-      summaryLine: '$a sends the last message in ${fmtPct(ratioA)} of conversations.',
+      summaryLine: '${ratioA > 1 - ratioA ? a : b} sends the last message in ${fmtPct(ratioA > 1 - ratioA ? ratioA : 1 - ratioA)} of conversations.',
     );
   }
 
@@ -241,7 +245,9 @@ class TimingMetrics {
       displayValueB: fmtPct(rateB),
       confidence: MetricConfidence.ok,
       evidenceMessageIds: evIds,
-      summaryLine: "$a's questions go unanswered ${fmtPct(rateA)} of the time.",
+      summaryLine: (rateA - rateB).abs() < 0.02
+          ? "Questions go unanswered at a similar rate for both."
+          : "${rateA > rateB ? a : b}'s questions go unanswered ${fmtPct(rateA > rateB ? rateA : rateB)} of the time.",
     );
   }
 
@@ -281,7 +287,9 @@ class TimingMetrics {
       displayValueB: fmtPct(ratioB),
       confidence: MetricConfidence.ok,
       evidenceMessageIds: evIds,
-      summaryLine: '$a breaks the silence ${fmtPct(ratioA)} of the time after $gapDays+ day gaps.',
+      summaryLine: (ratioA - ratioB).abs() < 0.02
+          ? 'Both break the silence equally often.'
+          : '${ratioA > ratioB ? a : b} breaks the silence more often (${fmtPct(ratioA > ratioB ? ratioA : ratioB)} of the time).',
     );
   }
 

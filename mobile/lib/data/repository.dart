@@ -153,4 +153,7 @@ class Repository {
   static Map<String, MetricResult> getMetricMap(String runId) {
     return {for (final m in getMetrics(runId)) m.metricKey: m};
   }
+
+  static Future<void> saveMetrics(String runId, List<MetricResult> metrics) =>
+      _metrics.put(runId, jsonEncode(metrics.map((m) => m.toJson()).toList()));
 }

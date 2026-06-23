@@ -58,7 +58,9 @@ class VolumeMetrics {
         displayValueB: fmtPct(wShareB),
         confidence: totalWords >= 50 ? MetricConfidence.ok : MetricConfidence.low,
         evidenceMessageIds: topLong.take(6).map((m) => m.id).toList(),
-        summaryLine: '$personA wrote ${fmtPct(wShareA)} of all words.',
+        summaryLine: (wShareA - wShareB).abs() < 0.02
+            ? 'Word share is roughly balanced.'
+            : '${wShareA > wShareB ? personA : personB} wrote more of the words (${fmtPct(wShareA > wShareB ? wShareA : wShareB)}).',
       ));
     } else {
       results.add(MetricResult.gated(runId, MK.wordShare));
@@ -81,8 +83,9 @@ class VolumeMetrics {
         displayValueB: '${avgB.toStringAsFixed(1)} words',
         confidence: MetricConfidence.ok,
         evidenceMessageIds: longMsgs.take(6).map((m) => m.id).toList(),
-        summaryLine:
-            '${avgA > avgB ? personA : personB} writes longer messages on average.',
+        summaryLine: (avgA - avgB).abs() < 0.5
+            ? 'Both write similarly-lengthed messages.'
+            : '${avgA > avgB ? personA : personB} writes longer messages on average.',
       ));
     } else {
       results.add(MetricResult.gated(runId, MK.avgMessageLength));
@@ -106,7 +109,9 @@ class VolumeMetrics {
         displayValueB: fmtPct(rateB),
         confidence: (withEmojiA + withEmojiB) >= 5 ? MetricConfidence.ok : MetricConfidence.low,
         evidenceMessageIds: topEmoji.take(6).map((m) => m.id).toList(),
-        summaryLine: '${rateA > rateB ? personA : personB} uses emojis in more of their messages.',
+        summaryLine: (rateA - rateB).abs() < 0.02
+            ? 'Both use emojis at a similar rate.'
+            : '${rateA > rateB ? personA : personB} uses emojis in more of their messages.',
       ));
     } else {
       results.add(MetricResult.gated(runId, MK.emojiRate));

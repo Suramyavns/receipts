@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../app/theme/tokens.dart';
 import '../../data/repository.dart';
 import '../../domain/insight/insight_generator.dart';
+import '../../domain/metrics/metrics_runner.dart';
 import '../../domain/models/analysis_run.dart';
 import '../../domain/models/metric_result.dart';
 import '../metric_detail/metric_detail_screen.dart';
@@ -18,25 +19,59 @@ import '../../shared/widgets/section_label.dart';
 
 final _yearFmt = DateFormat('MMM d, yyyy');
 
-class AnalysisDetailScreen extends StatelessWidget {
+class AnalysisDetailScreen extends StatefulWidget {
   final AnalysisRun run;
   const AnalysisDetailScreen({super.key, required this.run});
 
   @override
+  State<AnalysisDetailScreen> createState() => _AnalysisDetailScreenState();
+}
+
+class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
+  late Map<String, MetricResult> _metrics;
+  bool _recomputing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _metrics = Repository.getMetricMap(widget.run.id);
+  }
+
+  Future<void> _recompute() async {
+    if (_recomputing) return;
+    setState(() => _recomputing = true);
+    final messages = Repository.getMessages(widget.run.id);
+    final sessions = Repository.getSessions(widget.run.id);
+    final fresh = await MetricsRunner.run(
+      runId: widget.run.id,
+      personA: widget.run.personA,
+      personB: widget.run.personB,
+      messages: messages,
+      sessions: sessions,
+    );
+    await Repository.saveMetrics(widget.run.id, fresh);
+    if (mounted) {
+      setState(() {
+        _metrics = {for (final m in fresh) m.metricKey: m};
+        _recomputing = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final metrics = Repository.getMetricMap(run.id);
-    final insights = InsightGenerator.generate(run.personA, run.personB, metrics);
-    final health = metrics[MK.relationshipHealth];
-    final balance = metrics[MK.balanceScore];
-    final investment = metrics[MK.investmentIndex];
-    final pursuit = metrics[MK.pursuitGap];
-    final momentum = metrics[MK.momentumTrend];
+    final insights = InsightGenerator.generate(widget.run.personA, widget.run.personB, _metrics);
+    final health = _metrics[MK.relationshipHealth];
+    final balance = _metrics[MK.balanceScore];
+    final investment = _metrics[MK.investmentIndex];
+    final pursuit = _metrics[MK.pursuitGap];
+    final momentum = _metrics[MK.momentumTrend];
 
     final readText = insights.isNotEmpty
         ? insights.take(3).map((i) => i.text).join(' ')
         : 'Not enough data to generate a narrative yet.';
 
-    final exportInfo = '${_compact(run.messageCount)} messages';
+    final exportInfo = '${_compact(widget.run.messageCount)} messages';
 
     return Scaffold(
       backgroundColor: NeoColors.cream,
@@ -58,7 +93,7 @@ class AnalysisDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${run.personA.toUpperCase()} & ${run.personB.toUpperCase()}',
+                            '${widget.run.personA.toUpperCase()} & ${widget.run.personB.toUpperCase()}',
                             style: neoDisplay(17),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -71,7 +106,26 @@ class AnalysisDetailScreen extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => _copyStats(context, run, metrics),
+                      onTap: _recomputing ? null : _recompute,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: neoBox(
+                            bg: NeoColors.surface, offset: 3, radius: 6, borderWidth: 2),
+                        child: _recomputing
+                            ? const Padding(
+                                padding: EdgeInsets.all(9),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: NeoColors.ink,
+                                ),
+                              )
+                            : const Icon(Icons.refresh_outlined, size: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _copyStats(context, widget.run, _metrics),
                       child: Container(
                         width: 36,
                         height: 36,
@@ -90,22 +144,22 @@ class AnalysisDetailScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(18, 16, 18, 40),
                   children: [
-                    HealthHeroCard(run: run, health: health, momentum: momentum),
+                    HealthHeroCard(run: widget.run, health: health, momentum: momentum),
                     const SizedBox(height: 14),
 
                     Row(children: [
                       Expanded(
                           child: BalanceCard(
-                              run: run,
+                              run: widget.run,
                               balance: balance,
                               investment: investment,
-                              onTap: () => _openMetric(context, run, balance))),
+                              onTap: () => _openMetric(context, widget.run, balance))),
                       const SizedBox(width: 14),
                       Expanded(
                           child: PursuitCard(
-                              run: run,
+                              run: widget.run,
                               pursuit: pursuit,
-                              onTap: () => _openMetric(context, run, pursuit))),
+                              onTap: () => _openMetric(context, widget.run, pursuit))),
                     ]),
                     const SizedBox(height: 14),
 
@@ -114,19 +168,17 @@ class AnalysisDetailScreen extends StatelessWidget {
 
                     const SectionLabel('VOLUME'),
                     const SizedBox(height: 11),
-                    TwoColGrid(run: run, metrics: metrics, keys: const [
+                    TwoColGrid(run: widget.run, metrics: _metrics, keys: const [
                       MK.messageShare,
                       MK.wordShare,
                       MK.avgMessageLength,
                       MK.emojiRate,
-                      MK.mediaShare,
-                      MK.deletedRate,
                     ]),
                     const SizedBox(height: 14),
 
                     const SectionLabel('TIMING'),
                     const SizedBox(height: 11),
-                    TwoColGrid(run: run, metrics: metrics, keys: const [
+                    TwoColGrid(run: widget.run, metrics: _metrics, keys: const [
                       MK.replyLatency,
                       MK.initiationRatio,
                       MK.doubleTextRate,
@@ -139,7 +191,7 @@ class AnalysisDetailScreen extends StatelessWidget {
 
                     const SectionLabel('TONE'),
                     const SizedBox(height: 11),
-                    TwoColGrid(run: run, metrics: metrics, keys: const [
+                    TwoColGrid(run: widget.run, metrics: _metrics, keys: const [
                       MK.laughterRate,
                       MK.questionRate,
                       MK.affectionIndex,
@@ -148,7 +200,7 @@ class AnalysisDetailScreen extends StatelessWidget {
 
                     const SectionLabel('BIG PICTURE'),
                     const SizedBox(height: 11),
-                    TwoColGrid(run: run, metrics: metrics, keys: const [
+                    TwoColGrid(run: widget.run, metrics: _metrics, keys: const [
                       MK.reciprocityIndex,
                       MK.investmentIndex,
                     ]),
@@ -156,7 +208,7 @@ class AnalysisDetailScreen extends StatelessWidget {
 
                     const SectionLabel('MOMENTUM'),
                     const SizedBox(height: 11),
-                    MomentumChart(run: run, momentum: momentum),
+                    MomentumChart(run: widget.run, momentum: momentum),
                     const SizedBox(height: 6),
                   ],
                 ),

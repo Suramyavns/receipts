@@ -4,7 +4,7 @@ import 'metric_helpers.dart';
 
 class ToneMetrics {
   static final _laughRe = RegExp(
-    r'\b(ha{2,}|he{2,}|heh|hehe|haha|lol|lmao|lmfao|jaja|kkk+|555)\b',
+    r'\b(he{2,}|heh|hehe|haha|lol|lmao|lmfao|jaja|kkk+|555)\b',
     caseSensitive: false,
   );
   static final _affectionRe = RegExp(

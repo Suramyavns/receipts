@@ -4,9 +4,9 @@ import '../../../app/theme/tokens.dart';
 import '../../../data/repository.dart';
 import '../../../domain/models/analysis_run.dart';
 import '../../../shared/widgets/neo_timeline_node.dart';
-import '../../../shared/widgets/privacy_badge.dart';
 import '../../analysis_detail/analysis_detail_screen.dart';
 import 'sticky_import_button.dart';
+import 'timeline_header.dart';
 
 class ChatTimeline extends StatelessWidget {
   final List<AnalysisRun> runs;
@@ -38,29 +38,8 @@ class ChatTimeline extends StatelessWidget {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Receipts',
-                        style: neoDisplay(30).copyWith(height: 0.92, letterSpacing: -1)),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Your analyses. Nothing ever leaves this phone.',
-                      style: neoBody(13, color: NeoColors.ink.withValues(alpha: 0.55)),
-                    ),
-                  ],
-                ),
-              ),
-              const PrivacyBadge(),
-            ],
-          ),
-        ),
+        const TimelineHeader(),
+        const SizedBox(height: 4),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),

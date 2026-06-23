@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/theme/tokens.dart';
+import 'data/repository.dart';
 import 'features/home_timeline/home_screen.dart';
 import 'features/import_flow/import_screen.dart';
 import 'ingest/ingest_service.dart';
@@ -29,9 +30,15 @@ class _ChatStatAppState extends ConsumerState<ChatStatApp> {
   void _onFilesReceived(List<String> paths) {
     _navKey.currentState?.push(
       MaterialPageRoute(
-        builder: (_) => ImportScreen(filePaths: paths),
+        builder: (_) => ImportScreen(
+          filePaths: paths,
+          onComplete: (_) =>
+              ref.read(runsProvider.notifier).state = Repository.allRuns(),
+        ),
       ),
-    );
+    ).then((_) {
+      ref.read(runsProvider.notifier).state = Repository.allRuns();
+    });
   }
 
   @override

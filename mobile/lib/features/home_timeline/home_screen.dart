@@ -8,14 +8,14 @@ import '../import_flow/import_screen.dart';
 import 'widgets/chat_timeline.dart';
 import 'widgets/empty_state.dart';
 
-final _runsProvider = StateProvider<List<AnalysisRun>>((ref) => Repository.allRuns());
+final runsProvider = StateProvider<List<AnalysisRun>>((ref) => Repository.allRuns());
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final runs = ref.watch(_runsProvider);
+    final runs = ref.watch(runsProvider);
 
     return Scaffold(
       backgroundColor: NeoColors.cream,
@@ -28,7 +28,7 @@ class HomeScreen extends ConsumerWidget {
                   runs: runs,
                   ref: ref,
                   onImport: () => _pickAndImport(context, ref),
-                  runsProvider: _runsProvider,
+                  runsProvider: runsProvider,
                 ),
         ),
       ),
@@ -44,10 +44,10 @@ class HomeScreen extends ConsumerWidget {
         builder: (_) => ImportScreen(
           filePaths: paths,
           onComplete: (_) =>
-              ref.read(_runsProvider.notifier).state = Repository.allRuns(),
+              ref.read(runsProvider.notifier).state = Repository.allRuns(),
         ),
       ),
     );
-    ref.read(_runsProvider.notifier).state = Repository.allRuns();
+    ref.read(runsProvider.notifier).state = Repository.allRuns();
   }
 }

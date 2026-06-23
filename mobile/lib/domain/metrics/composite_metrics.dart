@@ -114,9 +114,14 @@ class CompositeMetrics {
     }
 
     // How balanced is initiation? 1 = perfectly equal, 0 = one-sided.
-    final balance = 1 - 2 * ((init.valueA ?? 0.5) - 0.5).abs();
+    final initA = init.valueA ?? 0.5;
+    final balance = 1 - 2 * (initA - 0.5).abs();
     final density = bfd.scalar ?? 0.5;
     final score = ((balance + density) / 2) * 100;
+
+    final carrier = init.winner == MetricWinner.tie
+        ? null
+        : (initA > 0.5 ? a : b);
 
     return MetricResult(
       runId: runId,
@@ -129,7 +134,9 @@ class CompositeMetrics {
           ? 'High reciprocity — genuine dialogue, both engaged.'
           : score >= 50
               ? 'Moderate reciprocity.'
-              : 'Low reciprocity — one person is carrying the conversation.',
+              : carrier != null
+                  ? 'Low reciprocity — $carrier is carrying the conversation.'
+                  : 'Low reciprocity — one person is carrying the conversation.',
     );
   }
 

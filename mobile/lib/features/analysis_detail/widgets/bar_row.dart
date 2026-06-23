@@ -18,7 +18,7 @@ class BarRow extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 28,
+          width: 40,
           child: Text(name, style: neoLabel(9), maxLines: 1, overflow: TextOverflow.clip),
         ),
         const SizedBox(width: 6),
@@ -42,7 +42,7 @@ class BarRow extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         SizedBox(
-          width: 46,
+          width: 32,
           child: Text(value,
               style: neoDisplay(12),
               textAlign: TextAlign.right,
