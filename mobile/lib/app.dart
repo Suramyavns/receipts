@@ -4,6 +4,7 @@ import 'app/theme/tokens.dart';
 import 'data/repository.dart';
 import 'features/home_timeline/home_screen.dart';
 import 'features/import_flow/import_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'ingest/ingest_service.dart';
 
 class ChatStatApp extends ConsumerStatefulWidget {
@@ -54,7 +55,7 @@ class _ChatStatAppState extends ConsumerState<ChatStatApp> {
       title: 'Receipts',
       debugShowCheckedModeBanner: false,
       theme: buildNeoTheme(),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }
