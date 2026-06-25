@@ -101,7 +101,7 @@ class CompositeMetrics {
       confidence: conf,
       summaryLine: gap.abs() < 0.1
           ? 'Both putting in similar effort — well matched.'
-          : '${gap > 0 ? a : b} is putting in noticeably more effort.',
+          : '${meanA > meanB ? a : b} is putting in noticeably more effort.',
     );
   }
 
