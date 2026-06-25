@@ -6,7 +6,7 @@ class GroupPickView extends StatelessWidget {
   final List<String> participants;
   final String? pickedA, pickedB;
   final ValueChanged<String> onPickedA, onPickedB;
-  final VoidCallback onConfirm, onCancel;
+  final VoidCallback onConfirm, onCancel, onAnalyzeAll;
 
   const GroupPickView({
     super.key,
@@ -17,6 +17,7 @@ class GroupPickView extends StatelessWidget {
     required this.onPickedB,
     required this.onConfirm,
     required this.onCancel,
+    required this.onAnalyzeAll,
   });
 
   @override
@@ -52,6 +53,53 @@ class GroupPickView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Analyze All option ────────────────────────────────────────
+                GestureDetector(
+                  onTap: onAnalyzeAll,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: neoBox(bg: NeoColors.lime, offset: 4, radius: 6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.group_rounded, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ANALYZE ALL ${participants.length} PEOPLE',
+                                style: neoHeadline(14),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'See the full group breakdown',
+                                style: neoBody(12,
+                                    color: NeoColors.ink.withValues(alpha: 0.6)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Divider with "or" ─────────────────────────────────────────
+                Row(children: [
+                  const Expanded(child: Divider(color: NeoColors.ink, thickness: 1.5)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('OR', style: neoLabel(11)),
+                  ),
+                  const Expanded(child: Divider(color: NeoColors.ink, thickness: 1.5)),
+                ]),
+                const SizedBox(height: 20),
+
+                // ── Head-to-head picker ───────────────────────────────────────
                 Text('Pick two people to compare head-to-head.',
                     style: neoBody(15, color: NeoColors.ink.withValues(alpha: 0.6))),
                 const SizedBox(height: 24),

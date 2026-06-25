@@ -29,6 +29,7 @@ class _ImportScreenState extends State<ImportScreen> {
   List<String> _participants = [];
   String? _pickedA;
   String? _pickedB;
+  bool _startGroupMode = false;
 
   final _stepLabels = const [
     'Reading file',
@@ -86,14 +87,28 @@ class _ImportScreenState extends State<ImportScreen> {
       setState(() { _result = result; _phase = _Phase.done; });
       widget.onComplete?.call(result.run);
       if (mounted) {
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => AnalysisDetailScreen(run: result.run)));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AnalysisDetailScreen(
+              run: result.run,
+              startGroupMode: _startGroupMode,
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         setState(() { _error = e.toString(); _phase = _Phase.error; });
       }
     }
+  }
+
+  void _analyzeAll() {
+    _startGroupMode = true;
+    final a = _participants.isNotEmpty ? _participants.first : null;
+    final b = _participants.length > 1 ? _participants[1] : _participants.firstOrNull;
+    _run(forcedA: a, forcedB: b ?? a);
   }
 
   int _stepIndexFor(String status) {
@@ -127,7 +142,10 @@ class _ImportScreenState extends State<ImportScreen> {
                 result: _result!,
                 onView: () => Navigator.pushReplacement(context,
                     MaterialPageRoute(
-                        builder: (_) => AnalysisDetailScreen(run: _result!.run))),
+                        builder: (_) => AnalysisDetailScreen(
+                              run: _result!.run,
+                              startGroupMode: _result!.run.isGroup,
+                            ))),
                 onRerun: () => _run(),
                 onBack: () => Navigator.pop(context),
               ),
@@ -138,6 +156,7 @@ class _ImportScreenState extends State<ImportScreen> {
                 onPickedA: (v) => setState(() => _pickedA = v),
                 onPickedB: (v) => setState(() => _pickedB = v),
                 onConfirm: () => _run(forcedA: _pickedA, forcedB: _pickedB),
+                onAnalyzeAll: _analyzeAll,
                 onCancel: () => Navigator.pop(context),
               ),
             _Phase.done => const SizedBox.shrink(),

@@ -16,6 +16,7 @@ class ChatStatApp extends ConsumerStatefulWidget {
 
 class _ChatStatAppState extends ConsumerState<ChatStatApp> {
   final _navKey = GlobalKey<NavigatorState>();
+  bool _importInProgress = false;
 
   @override
   void initState() {
@@ -29,6 +30,8 @@ class _ChatStatAppState extends ConsumerState<ChatStatApp> {
   }
 
   void _onFilesReceived(List<String> paths) {
+    if (_importInProgress) return;
+    _importInProgress = true;
     _navKey.currentState?.push(
       MaterialPageRoute(
         builder: (_) => ImportScreen(
@@ -38,6 +41,7 @@ class _ChatStatAppState extends ConsumerState<ChatStatApp> {
         ),
       ),
     ).then((_) {
+      _importInProgress = false;
       ref.read(runsProvider.notifier).state = Repository.allRuns();
     });
   }

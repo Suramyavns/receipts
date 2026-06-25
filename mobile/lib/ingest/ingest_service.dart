@@ -84,6 +84,35 @@ class IngestService {
     final pB = forcedPersonB ??
         (parsed.participants.length > 1 ? parsed.participants[1] : pA);
 
+    // For group chats with no forced pair, return a lightweight probe result so
+    // the UI can show the group pick screen. Nothing is saved yet — the second
+    // call (with forcedPersonA/B set) will run the full pipeline and save.
+    if (parsed.isGroup && forcedPersonA == null) {
+      final userMsgCount = parsed.messages.where((m) => m.isUserMessage).length;
+      final probeRun = AnalysisRun(
+        id: runId,
+        importedAt: DateTime.now(),
+        chatTitle: parsed.chatTitle,
+        isGroup: true,
+        participants: parsed.participants,
+        personA: pA,
+        personB: pB,
+        messageCount: userMsgCount,
+        mediaCount: parsed.mediaCount,
+        systemCount: parsed.systemCount,
+        dateRangeStart: parsed.dateRangeStart,
+        dateRangeEnd: parsed.dateRangeEnd,
+        sourceHash: hash,
+        exportFormat: parsed.format == ExportFormat.iosBracket ? 'iosBracket' : 'androidDash',
+        notEnoughData: userMsgCount < 20,
+      );
+      return IngestResult(
+        run: probeRun,
+        dedupeStatus: previousRun != null ? DedupeStatus.newerExport : DedupeStatus.fresh,
+        previousRun: previousRun,
+      );
+    }
+
     onProgress?.call('Sessionizing…');
     final sessions = Sessionizer.sessionize(parsed.messages, runId);
 
