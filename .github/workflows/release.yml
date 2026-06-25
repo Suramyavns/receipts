@@ -47,6 +47,5 @@ jobs:
           name: Latest Build
           body: |
             **Automated build** from [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          prerelease: true
           make_latest: true
           files: ${{ steps.apk.outputs.name }}
